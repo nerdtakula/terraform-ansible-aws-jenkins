@@ -1,0 +1,61 @@
+---
+# file: roles/jenkins_master/tasks/main.yml
+
+- name: create jenkins data directory
+  file:
+    name: /mnt/jenkins/home
+    state: directory
+    recurse: yes
+    owner: 1000
+    group: 1000
+
+- name: create jenkins init.d directory
+  file:
+    name: /mnt/jenkins/init.groovy.d
+    state: directory
+    recurse: yes
+    owner: 1000
+    group: 1000
+
+- name: create nginx home directory
+  file:
+    name: /mnt/nginx
+    state: directory
+    recurse: yes
+    owner: 1000
+    group: 1000
+
+- name: copy SSL certificates for service
+  copy:
+    src: '{{ item.src }}'
+    dest: '/mnt/nginx{{ item.dest }}'
+    owner: 1000
+    group: 1000
+  loop:
+    - { src: '{{ ssl_cert }}', dest: '{{ domain_name }}.crt' }
+    - { src: '{{ ssl_key }}', dest: '{{ domain_name }}.key' }
+
+- name: check for existing docker-compose file
+  stat:
+    path: /mnt/jenkins/docker-compose.yml
+  register: stat_result
+
+- name: tear down existing services
+  docker_compose:
+    project_src: /mnt/jenkins
+    state: absent
+  when: stat_result.stat.exists == True
+
+- name: place our docker-compose file
+  template:
+    src: docker-compose.yml.j2
+    dest: /mnt/jenkins/docker-compose.yml
+    backup: yes
+
+- name: create and start services
+  docker_compose:
+    project_src: /mnt/jenkins
+  register: output
+
+- debug:
+    var: output

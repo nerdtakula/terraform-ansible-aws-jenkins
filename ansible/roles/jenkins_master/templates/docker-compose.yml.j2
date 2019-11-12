@@ -1,0 +1,30 @@
+version: '3.6'
+
+services:
+  nginx-proxy:
+    image: nginx:1.17.5-alpine
+    hostname: jenkins-nginx
+    container_name: jenkins_nginx
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - /mnt/jenkins/userContent:/mnt/jenkins/userContent:ro
+      - /mnt/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /mnt/nginx/{{ ssl_cert }}:/etc/nginx/{{ domain_name }}.crt:ro
+      - /mnt/nginx/{{ ssl_key }}:/host/path/{{ domain_name }}.key:ro
+    links:
+      - jenkins
+    command: [ nginx, '-g', 'daemon off;' ]
+
+  jenkins:
+    image: jenkins/jenkins:{{ jenkins_version }}
+    hostname: jenkins-service
+    container_name: jenkins_service
+    restart: always
+    volumes:
+      - /mnt/jenkins/home:/var/jenkins_home
+      - /mnt/jenkins/init.groovy.d:/usr/share/jenkins/ref/init.groovy.d
+    environment:
+      JAVA_OPTS: "-Djava.util.logging.config.file=/var/jenkins_home/log.properties"
