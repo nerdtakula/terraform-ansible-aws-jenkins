@@ -1,3 +1,16 @@
+# /*
+#  * Deal with SSL cert files and ansible
+#  */
+# resource "local_file" "ssl_cert" {
+#   content  = file("${var.ssl_cert_file}")
+#   filename = "${path.module}/ansible/roles/jenkins_master/files/${var.ssl_cert_file}"
+# }
+
+# resource "local_file" "ssl_key" {
+#   content  = file("${var.ssl_cert_key}")
+#   filename = "${path.module}/ansible/roles/jenkins_master/files/${var.ssl_cert_key}"
+# }
+
 /*
  * Public Subnet for Jenkins and Build Slaves
  */
@@ -5,6 +18,7 @@ resource "aws_subnet" "public" {
   vpc_id                  = var.vpc_id
   map_public_ip_on_launch = true
   cidr_block              = var.public_subnet_cidr
+  availability_zone       = data.aws_ebs_volume.persistent_storage.availability_zone
 
   tags = {
     Name      = "${var.namespace}-${var.stage}-${var.name}-public-subnet"
@@ -89,6 +103,11 @@ resource "aws_volume_attachment" "persistent_storage" {
   device_name = "/dev/xvdf"
   volume_id   = data.aws_ebs_volume.persistent_storage.id
   instance_id = aws_instance.jenkins_master.id
+
+  # Run the playbook after the volume has mounted
+  provisioner "local-exec" {
+    command = "./ansible-${var.namespace}-${var.stage}-${var.name}.sh"
+  }
 }
 
 data "aws_ebs_volume" "persistent_storage" {
@@ -131,6 +150,7 @@ resource "aws_instance" "jenkins_master" {
   monitoring                  = true
   associate_public_ip_address = true
   source_dest_check           = false
+  # user_data                   = "${file("${path.module}/scripts/setup_mount.sh")}"
 
   root_block_device {
     volume_type           = "gp2"
@@ -150,15 +170,15 @@ echo "[jenkins_master]" > ./ansible-${var.namespace}-${var.stage}-${var.name}.in
 echo "${aws_instance.jenkins_master.public_ip} ansible_user=${var.ansible_user} ansible_ssh_private_key_file=${var.private_ssh_key}" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
 echo "" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
 echo "[jenkins_master:vars]" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
+echo "domain_name = ${var.domain_name}" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
 echo "ssl_cert = ${var.ssl_cert_file}" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
 echo "ssl_key = ${var.ssl_cert_key}" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
 %{for k, v in var.ansible_vars~}
 echo "${k} = ${v}" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
 %{endfor~}
 sleep 2s;
-export ANSIBLE_HOST_KEY_CHECKING=False;
-echo '#!/usr/bin/env bash\nexport ANSIBLE_HOST_KEY_CHECKING=False\nansible-playbook -u ${var.ansible_user} --private-key ${var.private_ssh_key} -i ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory ${path.module}/ansible/site.yml' > ./ansible-${var.namespace}-${var.stage}-${var.name}.sh
-ansible-playbook -u ${var.ansible_user} --private-key ${var.private_ssh_key} -i ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory ${path.module}/ansible/site.yml
+echo '#!/usr/bin/env bash\nexport ANSIBLE_HOST_KEY_CHECKING=False\nansible-playbook -u ${var.ansible_user} --private-key ${var.private_ssh_key} -i ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory ${path.module}/ansible/site.yml' > ./ansible-${var.namespace}-${var.stage}-${var.name}.sh;
+chmod +x ./ansible-${var.namespace}-${var.stage}-${var.name}.sh;
 EOT
   }
 
