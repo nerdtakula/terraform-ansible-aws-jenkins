@@ -5,9 +5,9 @@ http {
     server {
         # Redirect all http traffic on port 80 to https
         listen      80;
-        server_name ${domain_name};
+        server_name {{ domain_name }};
         ssl         off;
-        return      301 https://${domain_name}$request_uri;
+        return      301 https://{{ domain_name }}$request_uri;
     }
 
     ssl_certificate           /etc/nginx/external/${ssl_cert_file};
@@ -23,10 +23,10 @@ http {
     server {
         # FQDN jenkins proxy
         listen      443 ssl;
-        server_name ${domain_name};
+        server_name {{ domain_name }};
 
         # This is the jenkins web root directory.
-        root       /var/lib/jenkins/userContent/;
+        root       /mnt/userContent/;
         access_log /var/log/nginx/jenkins_access.log;
         error_log  /var/log/nginx/jenkins_error.log;
 
@@ -42,7 +42,7 @@ http {
         location /userContent {
             # Have nginx handle all the static requests to the userContent folder files.
             # This is the $JENKINS_HOME directory.
-            root /var/lib/jenkins/userContent;
+            root /mnt/userContent;
             if (!-f $request_filename) {
                 # This file does not exist, might be a directory or a /**view** url
                 rewrite (.*) /$1 last;
@@ -56,7 +56,7 @@ http {
 
             # Fix the "It appears that your reverse proxy set up is broken" error.
             proxy_pass         http://localhost:8080;
-            proxy_redirect     http://localhost:8080 https://${domain_name};
+            proxy_redirect     http://localhost:8080 https://{{ domain_name }};
             proxy_http_version 1.1;
 
             proxy_set_header Host $http_host;
@@ -78,7 +78,7 @@ http {
             proxy_set_header Connection "";  # Clear for keepalive
 
             # Workaround for https://issues.jenkins-ci.org/browse/JENKINS-45651
-            # add_header 'X-SSH-Endpoint' '${domain_name}:50000' always;
+            # add_header 'X-SSH-Endpoint' '{{ domain_name }}:5000' always;
         }
     }
 }
