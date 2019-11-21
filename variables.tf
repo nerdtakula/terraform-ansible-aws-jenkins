@@ -128,3 +128,8 @@ variable "ansible_vars" {
   description = "variables to pass though to ansible playbook for gitlab instance"
   default     = {}
 }
+
+variable "data_storage_ebs_name" {
+  type        = string
+  description = "name of persistant storage EBS volume"
+}

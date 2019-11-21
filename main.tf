@@ -83,6 +83,24 @@ resource "aws_eip" "default" {
 }
 
 /*
+ * Persistent storage for instance
+ */
+resource "aws_volume_attachment" "persistent_storage" {
+  device_name = "/dev/xvdf"
+  volume_id   = data.aws_ebs_volume.persistent_storage.id
+  instance_id = aws_instance.jenkins_master.id
+}
+
+data "aws_ebs_volume" "persistent_storage" {
+  most_recent = true
+
+  filter {
+    name   = "tag:Name"
+    values = [var.data_storage_ebs_name]
+  }
+}
+
+/*
  * Lookup up Ubuntu AMI for jenkins servers
  */
 data "aws_ami" "ubuntu" {
@@ -167,7 +185,7 @@ EOT
 }
 
 /*
- * Create Jenkins Master Decurity Group
+ * Create Jenkins Master Security Group
  */
 resource "aws_security_group" "jenkins_master" {
   name   = "${var.namespace}-${var.stage}-${var.name}-master-sec-grp"
@@ -205,10 +223,18 @@ resource "aws_security_group" "jenkins_master" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Jenkins slave agent port
+  # Jenkins JNLP slave agent port
   ingress {
-    from_port   = 50022
-    to_port     = 50022
+    from_port   = 5000
+    to_port     = 5000
+    protocol    = "tcp"
+    cidr_blocks = [var.public_subnet_cidr]
+  }
+
+  # Jenkins SSH slave agent port
+  ingress {
+    from_port   = 5022
+    to_port     = 5022
     protocol    = "tcp"
     cidr_blocks = [var.public_subnet_cidr]
   }

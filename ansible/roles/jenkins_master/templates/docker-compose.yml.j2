@@ -23,6 +23,9 @@ services:
     hostname: jenkins-service
     container_name: jenkins_service
     restart: always
+    ports:
+      - '5000:5000'
+      - '5022:5022'
     volumes:
       - /mnt/jenkins/home:/var/jenkins_home
       - /mnt/jenkins/init.groovy.d:/usr/share/jenkins/ref/init.groovy.d

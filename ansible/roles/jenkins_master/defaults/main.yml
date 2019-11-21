@@ -2,7 +2,7 @@
 # file: roles/jenkins_master/defaults/main.yml
 
 # Version of jenkins from 'https://hub.docker.com/r/jenkins/jenkins/'
-jenkins_version: 2.190.2-slim
+jenkins_version: 2.190.3-slim
 
 # Domain to match Route53
 domain_name: git.domain.com
