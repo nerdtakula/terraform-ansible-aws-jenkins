@@ -245,16 +245,16 @@ resource "aws_security_group" "jenkins_master" {
 
   # Jenkins JNLP slave agent port
   ingress {
-    from_port   = 5000
-    to_port     = 5000
+    from_port   = 50000
+    to_port     = 50000
     protocol    = "tcp"
     cidr_blocks = [var.public_subnet_cidr]
   }
 
   # Jenkins SSH slave agent port
   ingress {
-    from_port   = 5022
-    to_port     = 5022
+    from_port   = 50022
+    to_port     = 50022
     protocol    = "tcp"
     cidr_blocks = [var.public_subnet_cidr]
   }

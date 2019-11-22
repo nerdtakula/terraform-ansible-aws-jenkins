@@ -78,7 +78,7 @@ http {
             proxy_set_header Connection "";  # Clear for keepalive
 
             # Workaround for https://issues.jenkins-ci.org/browse/JENKINS-45651
-            # add_header 'X-SSH-Endpoint' '{{ domain_name }}:5000' always;
+            # add_header 'X-SSH-Endpoint' '{{ domain_name }}:50000' always;
         }
     }
 }
