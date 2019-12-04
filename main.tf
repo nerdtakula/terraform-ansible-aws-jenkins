@@ -167,7 +167,8 @@ resource "aws_instance" "jenkins_master" {
   provisioner "local-exec" {
     command = <<EOT
 echo "[jenkins_master]" > ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
-echo "${aws_instance.jenkins_master.public_ip} ansible_user=${var.ansible_user} ansible_ssh_private_key_file=${var.private_ssh_key}" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
+#echo "${aws_instance.jenkins_master.public_ip} ansible_user=${var.ansible_user} ansible_ssh_private_key_file=${var.private_ssh_key}" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
+echo "${aws_eip.default.public_ip} ansible_user=${var.ansible_user} ansible_ssh_private_key_file=${var.private_ssh_key}" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
 echo "" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
 echo "[jenkins_master:vars]" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
 echo "domain_name = ${var.domain_name}" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
